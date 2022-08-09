@@ -55,13 +55,22 @@ void PPMReader::handleInterrupt(void) {
     unsigned long time = microsAtLastPulse - previousMicros;
 
     if (time > blankTime) {
+        if (pulseCounter != channelAmount) {
+            activePulseSyncError = true;
+            ++pulseSyncErrorCounter;
+        }
+        else {
+            activePulseSyncError = false;
+        }
         // Blank detected: restart from channel 1 
         pulseCounter = 0;
     }
     else {
         // Store times between pulses as channel values
         if (pulseCounter < channelAmount) {
-            rawValues[pulseCounter] = time;
+            if (!activePulseSyncError) {
+                rawValues[pulseCounter] = time;
+            }
             ++pulseCounter;
         }
     }
@@ -80,19 +89,27 @@ unsigned PPMReader::rawChannelValue(byte channel) {
 
 unsigned PPMReader::latestValidChannelValue(byte channel, unsigned defaultValue) {
     // Check for channel's validity and return the latest valid channel value or defaultValue.
-    unsigned value = defaultValue;
-	unsigned long timeout;
-	noInterrupts();
-	timeout = micros() - microsAtLastPulse;
-	interrupts();
-    if ((timeout < failsafeTimeout) && (channel >= 1) && (channel <= channelAmount)) {
+    if ((channel >= 1) && (channel <= channelAmount) && !activePulseSyncError) {
         noInterrupts();
-        value = rawValues[channel-1];
-		interrupts();
-		if (value >= minChannelValue - channelValueMaxError && value <= maxChannelValue + channelValueMaxError) {
-			value = constrain(value, minChannelValue, maxChannelValue);
-		}
-        else value = defaultValue;
+        unsigned long timeout = micros() - microsAtLastPulse;
+        unsigned value = rawValues[channel-1];
+        interrupts();
+
+        if (timeout < failsafeTimeout) {
+            if (   (value >= (minChannelValue - channelValueMaxError))
+                && (value <= (maxChannelValue + channelValueMaxError)))
+            {
+                return constrain(value, minChannelValue, maxChannelValue);
+            }
+        }
     }
-    return value;
+
+    return defaultValue;
 }
+
+unsigned PPMReader::getNumPulseSyncErrorsSinceLast() {
+    unsigned ret = pulseSyncErrorCounter;
+    pulseSyncErrorCounter = 0;
+    return ret;
+}
+

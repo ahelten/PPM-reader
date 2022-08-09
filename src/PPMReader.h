@@ -56,6 +56,13 @@ class PPMReader {
     // A counter variable for determining which channel is being read next
     volatile byte pulseCounter = 0;
 
+    // A flag to indicate if the pulse count gets out of sync with the pulse stream
+    volatile bool activePulseSyncError = true;
+
+    // A counter of the number of sync errors that have occurred since last retrieving this
+    // counter
+    volatile unsigned pulseSyncErrorCounter = 0;
+
     // A time variable to remember when the last pulse was read
     volatile unsigned long microsAtLastPulse = 0;
 
@@ -73,6 +80,10 @@ class PPMReader {
     // Returns the latest received value that was considered valid for the channel (starting from 1)
     // Returns defaultValue if the channel hasn't received any valid values yet, or the PPM signal was absent for more than failsafeTimeout
     unsigned latestValidChannelValue(byte channel, unsigned defaultValue);
+
+    // Returns the number of sync errors since this function was last called (clears the number
+    // of errors each time it is called)
+    unsigned getNumPulseSyncErrorsSinceLast();
 
     private:
 
