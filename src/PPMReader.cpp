@@ -60,7 +60,10 @@ void PPMReader::handleInterrupt(void) {
             ++pulseSyncErrorCounter;
         }
         else {
-            activePulseSyncError = false;
+            if (activePulseSyncError) {
+                activePulseSyncErrorClearedTime_ms = millis();
+                activePulseSyncError = false;
+            }
         }
         // Blank detected: restart from channel 1 
         pulseCounter = 0;

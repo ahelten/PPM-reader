@@ -59,6 +59,9 @@ class PPMReader {
     // A flag to indicate if the pulse count gets out of sync with the pulse stream
     volatile bool activePulseSyncError = true;
 
+    // Millisecond timestamp for when the pulse sync error *cleared* up
+    volatile unsigned long long activePulseSyncErrorClearedTime_ms = 0;
+
     // A counter of the number of sync errors that have occurred since last retrieving this
     // counter
     volatile unsigned pulseSyncErrorCounter = 0;
@@ -84,6 +87,14 @@ class PPMReader {
     // Returns the number of sync errors since this function was last called (clears the number
     // of errors each time it is called)
     unsigned getNumPulseSyncErrorsSinceLast();
+
+    // Returns whether there is currently an active pulse sync error
+    bool isActivePulseSyncError() const { return activePulseSyncError; }
+
+    // Returns millisecond timestamp for when the last pulse sync was *cleared*
+    unsigned long long getActivePulseSyncErrorClearedTime_ms() const {
+       return activePulseSyncErrorClearedTime_ms;
+    }
 
     private:
 
